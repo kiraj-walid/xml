@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <!-- Élément racine -->
+    <xs:element name="devops-config">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="application" type="applicationType"/>
+                <xs:element name="environments" type="environmentsType"/>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:string" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Type Application -->
+    <xs:complexType name="applicationType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="version" type="xs:string"/>
+            <xs:element name="description" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Environments -->
+    <xs:complexType name="environmentsType">
+        <xs:sequence>
+            <xs:element name="environment" type="environmentType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Environment -->
+    <xs:complexType name="environmentType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="services" type="servicesType"/>
+            <xs:element name="variables" type="variablesType" minOccurs="0"/>
+            <xs:element name="secrets" type="secretsType" minOccurs="0"/>
+            <xs:element name="kubernetes" type="kubernetesType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Services -->
+    <xs:complexType name="servicesType">
+        <xs:sequence>
+            <xs:element name="service" type="serviceType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Service -->
+    <xs:complexType name="serviceType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="image" type="xs:string"/>
+            <xs:element name="tag" type="xs:string" minOccurs="0"/>
+            <xs:element name="ports" type="portsType" minOccurs="0"/>
+            <xs:element name="volumes" type="volumesType" minOccurs="0"/>
+            <xs:element name="environment" type="environmentVariablesType" minOccurs="0"/>
+            <xs:element name="depends_on" type="dependsOnType" minOccurs="0"/>
+            <xs:element name="command" type="xs:string" minOccurs="0"/>
+            <xs:element name="working_dir" type="xs:string" minOccurs="0"/>
+            <xs:element name="replicas" type="xs:positiveInteger" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Ports -->
+    <xs:complexType name="portsType">
+        <xs:sequence>
+            <xs:element name="port" type="portType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Port -->
+    <xs:complexType name="portType">
+        <xs:sequence>
+            <xs:element name="host" type="xs:positiveInteger"/>
+            <xs:element name="container" type="xs:positiveInteger"/>
+            <xs:element name="protocol" type="xs:string" minOccurs="0" default="tcp"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Volumes -->
+    <xs:complexType name="volumesType">
+        <xs:sequence>
+            <xs:element name="volume" type="volumeType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Volume -->
+    <xs:complexType name="volumeType">
+        <xs:sequence>
+            <xs:element name="host_path" type="xs:string"/>
+            <xs:element name="container_path" type="xs:string"/>
+            <xs:element name="mode" type="xs:string" minOccurs="0" default="rw"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Environment Variables -->
+    <xs:complexType name="environmentVariablesType">
+        <xs:sequence>
+            <xs:element name="variable" type="variableType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Variable -->
+    <xs:complexType name="variableType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Depends On -->
+    <xs:complexType name="dependsOnType">
+        <xs:sequence>
+            <xs:element name="service" type="xs:string" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Variables (globales) -->
+    <xs:complexType name="variablesType">
+        <xs:sequence>
+            <xs:element name="variable" type="variableType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Secrets -->
+    <xs:complexType name="secretsType">
+        <xs:sequence>
+            <xs:element name="secret" type="secretType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Secret -->
+    <xs:complexType name="secretType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="source" type="xs:string"/>
+            <xs:element name="key" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Kubernetes -->
+    <xs:complexType name="kubernetesType">
+        <xs:sequence>
+            <xs:element name="namespace" type="xs:string" minOccurs="0"/>
+            <xs:element name="resources" type="resourcesType" minOccurs="0"/>
+            <xs:element name="service" type="k8sServiceType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Resources -->
+    <xs:complexType name="resourcesType">
+        <xs:sequence>
+            <xs:element name="requests" type="resourceLimitsType" minOccurs="0"/>
+            <xs:element name="limits" type="resourceLimitsType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type Resource Limits -->
+    <xs:complexType name="resourceLimitsType">
+        <xs:sequence>
+            <xs:element name="cpu" type="xs:string" minOccurs="0"/>
+            <xs:element name="memory" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type K8s Service -->
+    <xs:complexType name="k8sServiceType">
+        <xs:sequence>
+            <xs:element name="type" type="xs:string" minOccurs="0" default="ClusterIP"/>
+            <xs:element name="ports" type="k8sPortsType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type K8s Ports -->
+    <xs:complexType name="k8sPortsType">
+        <xs:sequence>
+            <xs:element name="port" type="k8sPortType" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Type K8s Port -->
+    <xs:complexType name="k8sPortType">
+        <xs:sequence>
+            <xs:element name="port" type="xs:positiveInteger"/>
+            <xs:element name="target_port" type="xs:positiveInteger"/>
+            <xs:element name="protocol" type="xs:string" minOccurs="0" default="TCP"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
