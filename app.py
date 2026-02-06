@@ -16,6 +16,8 @@ DOCKER_COMPOSE_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'docker-co
 KUBERNETES_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'kubernetes.xslt')
 HELM_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'helm.xslt')
 JSON_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'json.xslt')
+GITHUB_ACTIONS_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'github-actions.xslt')
+JENKINS_XSLT = os.path.join(os.path.dirname(__file__), 'xslt', 'jenkins.xslt')
 EXAMPLES_DIR = os.path.join(os.path.dirname(__file__), 'examples')
 
 @app.route('/examples/<filename>')
@@ -352,6 +354,84 @@ def compare_environments():
         return jsonify({
             'success': False,
             'message': f'Erreur lors de la comparaison: {str(e)}'
+        }), 500
+
+
+@app.route('/api/transform/github-actions', methods=['POST'])
+def transform_github_actions():
+    """Endpoint pour transformer XML en GitHub Actions workflow YAML"""
+    try:
+        data = request.get_json()
+        xml_content = data.get('xml', '')
+        environment = data.get('environment', 'dev')
+        
+        if not xml_content:
+            return jsonify({
+                'success': False,
+                'message': 'Aucun contenu XML fourni'
+            }), 400
+        
+        # Valider d'abord
+        validation = validate_xml(xml_content)
+        if not validation['valid']:
+            return jsonify({
+                'success': False,
+                'message': 'Le XML n\'est pas valide',
+                'validation_errors': validation.get('errors', [])
+            }), 400
+        
+        # Transformer
+        if os.path.exists(GITHUB_ACTIONS_XSLT):
+            result = transform_xml(xml_content, GITHUB_ACTIONS_XSLT, environment)
+            return jsonify(result)
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Fichier XSLT GitHub Actions non trouvé'
+            }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur serveur: {str(e)}'
+        }), 500
+
+
+@app.route('/api/transform/jenkins', methods=['POST'])
+def transform_jenkins():
+    """Endpoint pour transformer XML en Jenkins pipeline Groovy"""
+    try:
+        data = request.get_json()
+        xml_content = data.get('xml', '')
+        environment = data.get('environment', 'dev')
+        
+        if not xml_content:
+            return jsonify({
+                'success': False,
+                'message': 'Aucun contenu XML fourni'
+            }), 400
+        
+        # Valider d'abord
+        validation = validate_xml(xml_content)
+        if not validation['valid']:
+            return jsonify({
+                'success': False,
+                'message': 'Le XML n\'est pas valide',
+                'validation_errors': validation.get('errors', [])
+            }), 400
+        
+        # Transformer
+        if os.path.exists(JENKINS_XSLT):
+            result = transform_xml(xml_content, JENKINS_XSLT, environment)
+            return jsonify(result)
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Fichier XSLT Jenkins non trouvé'
+            }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Erreur serveur: {str(e)}'
         }), 500
 
 

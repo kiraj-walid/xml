@@ -15,6 +15,8 @@ Application web complète pour centraliser et gérer les configurations DevOps p
   - XML → Kubernetes YAML (Deployment, Service, ConfigMap, Secret)
   - XML → Helm Charts
   - XML → JSON
+  - **XML → GitHub Actions Workflow** ✨ NEW
+  - **XML → Jenkins Pipeline** ✨ NEW
   - Validation Docker Compose avec Docker CLI
   
 - **Gestion Multi-Environnements** :
@@ -23,8 +25,9 @@ Application web complète pour centraliser et gérer les configurations DevOps p
   - Export au format JSON
   
 - **CI/CD** : 
-  - Génération de scripts pour Jenkins
-  - Workflows GitHub Actions
+  - **Génération automatique de workflows GitHub Actions** ✨ NEW
+  - **Génération automatique de pipelines Jenkins** ✨ NEW
+  - Transformations XSLT pour CI/CD
   - Intégration dans les pipelines automatisés
 
 ## 📋 Prérequis

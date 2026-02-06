@@ -1,0 +1,212 @@
+// Pipeline Jenkins généré automatiquement pour my-web-app
+// Version: 1.0.0
+// Description: Application web avec base de données
+
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'my-web-app'
+        APP_VERSION = '1.0.0'
+        DOCKER_REGISTRY = credentials('docker-registry-credentials')
+        KUBECONFIG = credentials('kubeconfig')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Validate XML') {
+            steps {
+                script {
+                    sh '''
+                        python3 -m pip install lxml --quiet
+                        python3 scripts/validate-xml.py config.xml
+                    '''
+                }
+            }
+        }
+
+        stage('Generate Docker Compose') {
+            when {
+                expression { params.DEPLOY_TARGET == 'docker-compose' }
+            }
+            steps {
+                script {
+                    sh '''
+                        python3 scripts/generate-yaml.py config.xml \
+                            --type docker-compose \
+                            --environment ${ENVIRONMENT} \
+                            --output docker-compose.yaml
+                        echo "✅ Fichier docker-compose.yaml généré"
+                    '''
+                }
+            }
+        }
+
+        stage('Generate Kubernetes Manifests') {
+            when {
+                expression { params.DEPLOY_TARGET == 'kubernetes' }
+            }
+            steps {
+                script {
+                    sh '''
+                        python3 scripts/generate-yaml.py config.xml \
+                            --type kubernetes \
+                            --environment ${ENVIRONMENT} \
+                            --output kubernetes.yaml
+                        echo "✅ Fichier kubernetes.yaml généré"
+                    '''
+                }
+            }
+        }
+
+        stage('Build Services') {
+            when {
+                expression { params.DEPLOY_TARGET == 'docker-compose' || params.DEPLOY_TARGET == 'kubernetes' }
+            }
+            parallel {
+                stage('Build web') {
+                    steps {
+                        script {
+                            echo "Building service: web"
+                            // Image: nginx:alpine
+                            // Add your build commands here
+                        }
+                    }
+                }
+                stage('Build api') {
+                    steps {
+                        script {
+                            echo "Building service: api"
+                            // Image: python:3.11-slim
+                            // Add your build commands here
+                        }
+                    }
+                }
+                stage('Build db') {
+                    steps {
+                        script {
+                            echo "Building service: db"
+                            // Image: postgres:15-alpine
+                            // Add your build commands here
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Validate Docker Compose') {
+            when {
+                expression { params.DEPLOY_TARGET == 'docker-compose' }
+            }
+            steps {
+                script {
+                    sh '''
+                        docker-compose -f docker-compose.yaml config
+                        echo "✅ Docker Compose validation réussie"
+                    '''
+                }
+            }
+        }
+
+        stage('Validate Kubernetes') {
+            when {
+                expression { params.DEPLOY_TARGET == 'kubernetes' }
+            }
+            steps {
+                script {
+                    sh '''
+                        kubectl --dry-run=client -f kubernetes.yaml apply
+                        echo "✅ Kubernetes validation réussie"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Docker Compose') {
+            when {
+                expression { params.DEPLOY_TARGET == 'docker-compose' }
+            }
+            steps {
+                script {
+                    sh '''
+                        docker-compose -f docker-compose.yaml down
+                        docker-compose -f docker-compose.yaml up -d
+                        docker-compose -f docker-compose.yaml ps
+                        echo "✅ Déploiement Docker Compose réussi"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                expression { params.DEPLOY_TARGET == 'kubernetes' }
+            }
+            steps {
+                script {
+                    sh '''
+                        # Apply Kubernetes manifests
+                        kubectl apply -f kubernetes.yaml
+                        
+                        # Wait for deployments to be ready
+                        kubectl rollout status deployment --timeout=5m
+                        
+                        # Display deployment status
+                        kubectl get deployments
+                        kubectl get services
+                        kubectl get pods
+                        echo "✅ Déploiement Kubernetes réussi"
+                    '''
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    echo "Vérification de la santé des services..."
+                    // Add your health check logic here
+                    echo "Service: web"
+                    echo "Service: api"
+                    echo "Service: db"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Archive generated files
+            archiveArtifacts artifacts: '*.yaml', allowEmptyArchive: true
+            // Clean workspace
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline terminé avec succès'
+        }
+        failure {
+            echo '❌ Pipeline échoué'
+        }
+    }
+}
+
+// Paramètres du pipeline
+properties([
+    parameters([
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'prod'],
+            description: 'Environnement de déploiement'
+        ),
+        choice(
+            name: 'DEPLOY_TARGET',
+            choices: ['docker-compose', 'kubernetes'],
+            description: 'Plateforme de déploiement'
+        )
+    ])
+])
