@@ -97,7 +97,7 @@ function App() {
       });
 
       setValidationResult(response.data);
-      
+
       if (response.data.valid) {
         toast.success('Validation réussie !');
         // Charger les environnements disponibles
@@ -187,6 +187,62 @@ function App() {
     }
   };
 
+  const generateGitHubActions = async () => {
+    if (!xmlContent.trim()) {
+      toast.error('Veuillez saisir du contenu XML');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/transform/github-actions`, {
+        xml: xmlContent,
+        environment: selectedEnvironment
+      });
+
+      if (response.data.success) {
+        setGeneratedContent(response.data.content);
+        setGeneratedType('github-actions');
+        setActiveTab('preview');
+        toast.success('Workflow GitHub Actions généré avec succès !');
+      } else {
+        toast.error(response.data.message || 'Erreur lors de la génération');
+      }
+    } catch (error) {
+      toast.error('Erreur: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateJenkins = async () => {
+    if (!xmlContent.trim()) {
+      toast.error('Veuillez saisir du contenu XML');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/transform/jenkins`, {
+        xml: xmlContent,
+        environment: selectedEnvironment
+      });
+
+      if (response.data.success) {
+        setGeneratedContent(response.data.content);
+        setGeneratedType('jenkins');
+        setActiveTab('preview');
+        toast.success('Pipeline Jenkins généré avec succès !');
+      } else {
+        toast.error(response.data.message || 'Erreur lors de la génération');
+      }
+    } catch (error) {
+      toast.error('Erreur: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const downloadFile = async () => {
     if (!generatedContent) {
       toast.error('Aucun contenu à télécharger');
@@ -211,7 +267,7 @@ function App() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      
+
       toast.success('Fichier téléchargé avec succès !');
     } catch (error) {
       toast.error('Erreur lors du téléchargement: ' + error.message);
@@ -221,7 +277,7 @@ function App() {
   return (
     <div className="container">
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       <div className="header">
         <h1>🚀 DevOps Config Manager</h1>
         <p>Gestion centralisée des configurations multi-environnements</p>
@@ -279,106 +335,120 @@ function App() {
             <div className="editor-container">
               <h2>Configuration XML</h2>
               <div className="controls">
-              <button className="btn btn-secondary" onClick={loadExample}>
-                📄 Charger l'exemple
-              </button>
-              <button className="btn btn-primary" onClick={validateXML} disabled={loading}>
-                {loading ? '⏳ Validation...' : '✓ Valider XML'}
-              </button>
-              {environments.length > 0 && (
-                <>
-                  <select
-                    className="select"
-                    value={selectedEnvironment}
-                    onChange={(e) => setSelectedEnvironment(e.target.value)}
-                  >
-                    {environments.map((env) => (
-                      <option key={env} value={env}>
-                        {env}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    className="btn btn-success"
-                    onClick={generateDockerCompose}
-                    disabled={loading || !validationResult?.valid}
-                  >
-                    🐳 Générer Docker Compose
-                  </button>
-                  <button
-                    className="btn btn-success"
-                    onClick={generateKubernetes}
-                    disabled={loading || !validationResult?.valid}
-                  >
-                    ☸️ Générer Kubernetes
-                  </button>
-                  <button
-                    className="btn btn-success"
-                    onClick={async () => {
-                      if (!xmlContent.trim()) {
-                        toast.error('Veuillez saisir du contenu XML');
-                        return;
-                      }
-                      setLoading(true);
-                      try {
-                        const response = await axios.post(`${API_BASE_URL}/transform/helm`, {
-                          xml: xmlContent,
-                          environment: selectedEnvironment
-                        });
-                        if (response.data.success) {
-                          setGeneratedContent(response.data.content);
-                          setGeneratedType('helm');
-                          setActiveTab('preview');
-                          toast.success('Fichier Helm Chart généré avec succès !');
-                        } else {
-                          toast.error(response.data.message || 'Erreur lors de la génération');
+                <button className="btn btn-secondary" onClick={loadExample}>
+                  📄 Charger l'exemple
+                </button>
+                <button className="btn btn-primary" onClick={validateXML} disabled={loading}>
+                  {loading ? '⏳ Validation...' : '✓ Valider XML'}
+                </button>
+                {environments.length > 0 && (
+                  <>
+                    <select
+                      className="select"
+                      value={selectedEnvironment}
+                      onChange={(e) => setSelectedEnvironment(e.target.value)}
+                    >
+                      {environments.map((env) => (
+                        <option key={env} value={env}>
+                          {env}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="btn btn-success"
+                      onClick={generateDockerCompose}
+                      disabled={loading || !validationResult?.valid}
+                    >
+                      🐳 Générer Docker Compose
+                    </button>
+                    <button
+                      className="btn btn-success"
+                      onClick={generateKubernetes}
+                      disabled={loading || !validationResult?.valid}
+                    >
+                      ☸️ Générer Kubernetes
+                    </button>
+                    <button
+                      className="btn btn-success"
+                      onClick={async () => {
+                        if (!xmlContent.trim()) {
+                          toast.error('Veuillez saisir du contenu XML');
+                          return;
                         }
-                      } catch (error) {
-                        toast.error('Erreur: ' + (error.response?.data?.message || error.message));
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    disabled={loading || !validationResult?.valid}
-                  >
-                    🎯 Générer Helm Chart
-                  </button>
-                </>
-              )}
-            </div>
-
-            <div className="editor-wrapper">
-              <Editor
-                height="500px"
-                defaultLanguage="xml"
-                value={xmlContent}
-                onChange={(value) => setXmlContent(value || '')}
-                theme="vs-light"
-                options={{
-                  minimap: { enabled: true },
-                  fontSize: 14,
-                  wordWrap: 'on',
-                  automaticLayout: true,
-                }}
-              />
-            </div>
-
-            {validationResult && (
-              <div className={`validation-result ${validationResult.valid ? 'success' : 'error'}`}>
-                <strong>{validationResult.valid ? '✓' : '✗'}</strong> {validationResult.message}
-                {validationResult.errors && validationResult.errors.length > 0 && (
-                  <ul className="validation-errors">
-                    {validationResult.errors.map((error, index) => (
-                      <li key={index}>
-                        {error.line && `Ligne ${error.line}: `}
-                        {error.message}
-                      </li>
-                    ))}
-                  </ul>
+                        setLoading(true);
+                        try {
+                          const response = await axios.post(`${API_BASE_URL}/transform/helm`, {
+                            xml: xmlContent,
+                            environment: selectedEnvironment
+                          });
+                          if (response.data.success) {
+                            setGeneratedContent(response.data.content);
+                            setGeneratedType('helm');
+                            setActiveTab('preview');
+                            toast.success('Fichier Helm Chart généré avec succès !');
+                          } else {
+                            toast.error(response.data.message || 'Erreur lors de la génération');
+                          }
+                        } catch (error) {
+                          toast.error('Erreur: ' + (error.response?.data?.message || error.message));
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading || !validationResult?.valid}
+                    >
+                      🎯 Générer Helm Chart
+                    </button>
+                    <button
+                      className="btn btn-info"
+                      onClick={generateGitHubActions}
+                      disabled={loading || !validationResult?.valid}
+                    >
+                      🔄 Générer GitHub Actions
+                    </button>
+                    <button
+                      className="btn btn-info"
+                      onClick={generateJenkins}
+                      disabled={loading || !validationResult?.valid}
+                    >
+                      🔧 Générer Jenkins Pipeline
+                    </button>
+                  </>
                 )}
               </div>
-            )}
-          </div>
+
+              <div className="editor-wrapper">
+                <Editor
+                  height="500px"
+                  defaultLanguage="xml"
+                  value={xmlContent}
+                  onChange={(value) => setXmlContent(value || '')}
+                  theme="vs-light"
+                  options={{
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    wordWrap: 'on',
+                    automaticLayout: true,
+                  }}
+                />
+              </div>
+
+              {validationResult && (
+                <div className={`validation-result ${validationResult.valid ? 'success' : 'error'}`}>
+                  <strong>{validationResult.valid ? '✓' : '✗'}</strong> {validationResult.message}
+                  {validationResult.errors && validationResult.errors.length > 0 && (
+                    <ul className="validation-errors">
+                      {validationResult.errors.map((error, index) => (
+                        <li key={index}>
+                          {error.line && `Ligne ${error.line}: `}
+                          {error.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             <ConfigForm
               onGenerateXML={(xml) => {
@@ -459,10 +529,12 @@ function App() {
           <div className="preview-container">
             <h2>
               Fichier {
-                generatedType === 'docker-compose' ? 'Docker Compose' : 
-                generatedType === 'kubernetes' ? 'Kubernetes' : 
-                generatedType === 'helm' ? 'Helm Chart' : 'Généré'
-              } 
+                generatedType === 'docker-compose' ? 'Docker Compose' :
+                  generatedType === 'kubernetes' ? 'Kubernetes' :
+                    generatedType === 'helm' ? 'Helm Chart' :
+                      generatedType === 'github-actions' ? 'GitHub Actions Workflow' :
+                        generatedType === 'jenkins' ? 'Jenkins Pipeline' : 'Généré'
+              }
               {' '}({selectedEnvironment})
             </h2>
             <div className="controls">

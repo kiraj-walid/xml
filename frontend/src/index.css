@@ -152,6 +152,15 @@ code {
   background: #c82333;
 }
 
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
 .select {
   padding: 10px 15px;
   border: 1px solid #ddd;
